@@ -35,14 +35,47 @@ class WindowsOcrEngine:
                 "winrt-Windows.Storage.Streams winrt-Windows.Foundation"
             ) from exc
 
+        # 1) ลองตามภาษาใน user profile ก่อน (ปกติได้)
         self._engine = _WinOcr.try_create_from_user_profile_languages()
+        # 2) บางเครื่องคืน None ทั้งที่มีภาษา OCR ติดตั้งอยู่ (ขึ้นกับ profile language)
+        #    -> fallback: ใช้ภาษา OCR ที่ "มีในเครื่อง" ตัวใดก็ได้ (ราคา/ชื่อเป็นอังกฤษ ใช้ en ได้)
+        if self._engine is None:
+            self._engine = self._fallback_engine(_WinOcr)
         if self._engine is None:
             raise RuntimeError(
-                "Windows ไม่มีภาษา OCR ที่ใช้ได้ — ติดตั้ง Language pack "
-                "(Settings > Time & Language > Language) แล้วลองใหม่"
+                "Windows ไม่มีภาษา OCR ที่ใช้ได้\n\n"
+                "วิธีแก้ (เลือกทางใดทางหนึ่ง):\n"
+                "1) PowerShell (Run as administrator) แล้วรัน:\n"
+                '   Add-WindowsCapability -Online -Name "Language.OCR~~~en-US~0.0.1.0"\n'
+                "2) Settings > Time & language > Language & region > English > ⋮ Language options\n"
+                "   > Optional features > เพิ่ม 'Optical character recognition'\n"
+                "เสร็จแล้วเปิดโปรแกรมใหม่"
             )
         self._scale = max(1, int(scale))
         self._max_dim = _WinOcr.max_image_dimension  # OCR รับภาพได้ใหญ่สุดเท่านี้ (px)
+
+    @staticmethod
+    def _fallback_engine(win_ocr):
+        """ลองสร้าง engine จากภาษา OCR ที่ติดตั้งในเครื่อง (en-US/en ก่อน แล้วตัวแรกที่มี)."""
+        try:
+            from winrt.windows.globalization import Language
+
+            for tag in ("en-US", "en"):
+                eng = win_ocr.try_create_from_language(Language(tag))
+                if eng is not None:
+                    return eng
+        except Exception:
+            pass
+        try:
+            langs = win_ocr.available_recognizer_languages  # ภาษา OCR ที่ติดตั้งจริง
+            if langs:
+                for lang in langs:
+                    eng = win_ocr.try_create_from_language(lang)
+                    if eng is not None:
+                        return eng
+        except Exception:
+            pass
+        return None
 
     def recognize(self, capture: Capture) -> OcrResult:
         return asyncio.run(self._recognize_async(capture))
