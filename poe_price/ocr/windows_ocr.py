@@ -17,9 +17,14 @@ from .base import OcrLine, OcrResult, OcrWord
 
 
 class WindowsOcrEngine:
-    """OcrEngine ที่ใช้ Windows.Media.Ocr. สร้าง WinRT OcrEngine ครั้งเดียวแล้วใช้ซ้ำ."""
+    """OcrEngine ที่ใช้ Windows.Media.Ocr. สร้าง WinRT OcrEngine ครั้งเดียวแล้วใช้ซ้ำ.
 
-    def __init__(self) -> None:
+    scale: ขยายภาพก่อน OCR (default 2 เท่า). Windows OCR อ่านตัวอักษรใหญ่แม่นกว่ามาก
+    โดยเฉพาะ font แฟนซีบนพื้น parchment ของเกม + ชื่อสั้น ๆ ที่ทนพลาดได้น้อย.
+    พิกัด bbox ที่ได้จะถูกหารกลับด้วย scale ให้เป็นพิกัดจอจริง.
+    """
+
+    def __init__(self, scale: int = 2) -> None:
         # import แบบ lazy ในตัว — ให้ ImportError ชัดเจนถ้ายังไม่ได้ลง winrt
         try:
             from winrt.windows.media.ocr import OcrEngine as _WinOcr
@@ -36,12 +41,22 @@ class WindowsOcrEngine:
                 "Windows ไม่มีภาษา OCR ที่ใช้ได้ — ติดตั้ง Language pack "
                 "(Settings > Time & Language > Language) แล้วลองใหม่"
             )
+        self._scale = max(1, int(scale))
+        self._max_dim = _WinOcr.max_image_dimension  # OCR รับภาพได้ใหญ่สุดเท่านี้ (px)
 
     def recognize(self, capture: Capture) -> OcrResult:
         return asyncio.run(self._recognize_async(capture))
 
     async def _recognize_async(self, capture: Capture) -> OcrResult:
-        from winrt.windows.graphics.imaging import BitmapDecoder
+        from winrt.windows.graphics.imaging import (
+            BitmapAlphaMode,
+            BitmapDecoder,
+            BitmapInterpolationMode,
+            BitmapPixelFormat,
+            BitmapTransform,
+            ColorManagementMode,
+            ExifOrientationMode,
+        )
         from winrt.windows.storage.streams import DataWriter, InMemoryRandomAccessStream
 
         stream = InMemoryRandomAccessStream()
@@ -53,18 +68,37 @@ class WindowsOcrEngine:
         stream.seek(0)
 
         decoder = await BitmapDecoder.create_async(stream)
-        bitmap = await decoder.get_software_bitmap_async()
+
+        # เลือก scale ที่ไม่ทำให้ภาพเกินขนาดสูงสุดที่ OCR รับได้
+        scale = self._scale
+        while scale > 1 and (capture.width * scale > self._max_dim or capture.height * scale > self._max_dim):
+            scale -= 1
+
+        if scale > 1:
+            transform = BitmapTransform()
+            transform.scaled_width = capture.width * scale
+            transform.scaled_height = capture.height * scale
+            transform.interpolation_mode = BitmapInterpolationMode.FANT  # คุณภาพสูง
+            bitmap = await decoder.get_software_bitmap_transformed_async(
+                BitmapPixelFormat.BGRA8, BitmapAlphaMode.PREMULTIPLIED,
+                transform, ExifOrientationMode.IGNORE_EXIF_ORIENTATION,
+                ColorManagementMode.DO_NOT_COLOR_MANAGE,
+            )
+        else:
+            bitmap = await decoder.get_software_bitmap_async()
+
         result = await self._engine.recognize_async(bitmap)
 
+        inv = 1.0 / scale  # หารพิกัดกลับเป็นพิกัดจอจริง
         lines: list[OcrLine] = []
         for line in result.lines:
             words = tuple(
                 OcrWord(
                     text=w.text,
-                    x=w.bounding_rect.x,
-                    y=w.bounding_rect.y,
-                    width=w.bounding_rect.width,
-                    height=w.bounding_rect.height,
+                    x=w.bounding_rect.x * inv,
+                    y=w.bounding_rect.y * inv,
+                    width=w.bounding_rect.width * inv,
+                    height=w.bounding_rect.height * inv,
                 )
                 for w in line.words
             )
