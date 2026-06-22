@@ -24,6 +24,13 @@
 |:---:|:---:|:---:|
 | ![divine](docs/divine.png) | ![exalted](docs/exalt.png) | ![chaos](docs/chaos.png) |
 
+ใช้ได้กับหลาย panel — Runeshape Combinations, ช่องเก็บของ, Currency Exchange ฯลฯ
+(ขอแค่ OCR อ่านชื่อไอเทมออก + ไอเทมอยู่ในหมวดที่ดึง ก็ตีราคาได้):
+
+| Expedition | ช่องเก็บของ | Currency Exchange |
+|:---:|:---:|:---:|
+| ![expedition](docs/expedition.png) | ![bag](docs/bag.png) | ![exchange](docs/exchange.png) |
+
 หน้าตั้งค่า (กด F8) — เลือกลีก / หน่วยเงิน / ปุ่มลัด / ความทึบ / ปิดโปรแกรม:
 
 ![settings](docs/setting.png)
