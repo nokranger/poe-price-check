@@ -16,6 +16,18 @@
 
 ---
 
+## ภาพตัวอย่าง (Screenshots)
+
+ราคาโผล่ข้างของแต่ละชิ้น สลับหน่วยเงินได้ (divine / exalted / chaos):
+
+![overlay ในเกม](docs/overlay.png)
+
+หน้าตั้งค่า (กด F8) — เลือกลีก / หน่วยเงิน / ปุ่มลัด / ความทึบ:
+
+![settings](docs/settings.png)
+
+---
+
 # วิธีใช้งาน — เลือกได้ 2 แบบ
 
 > ⚠️ **ก่อนใช้ทุกแบบ:** ตั้งเกมเป็นโหมด **Windowed** หรือ **Borderless** (ห้าม Exclusive Fullscreen)
