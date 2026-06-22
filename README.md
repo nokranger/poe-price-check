@@ -118,6 +118,15 @@ py -m PyInstaller --onefile --windowed --name "PoE Price Check" ^
 **ลีก:** ดีฟอลต์ "Runes of Aldur". ลีกเปลี่ยนเมื่อไหร่ ไปแก้ในหน้า Settings (F8) ได้เลย
 **ไม่ต้องโหลดโปรแกรมใหม่** (ใส่ชื่อให้ตรงกับแถบเลือกลีกบน poe.ninja/poe2)
 
+## หมวดที่เช็คราคาได้ (14 หมวด)
+
+Currency · Fragments · Uncut Gems · Lineage Support Gems · Essences · Soul Cores ·
+Idols · Runes · Expedition · **Verisium** (รวม Alloy) · **Omens** · **Abyssal Bones** ·
+**Breach Catalysts** · **Liquid Emotions**
+
+> ของในหมวดพวกนี้ ถ้า OCR อ่านชื่อออก = เช็คราคาได้
+> **ยังไม่รองรับ:** Unique items, Tablets, Atziri's Temple, เจมตัด (Gems) — ใช้ API คนละ endpoint
+
 ---
 
 # สำหรับนักพัฒนา
@@ -167,10 +176,11 @@ py -m unittest discover -s tests -v
 
 `GET https://poe.ninja/poe2/api/economy/exchange/current/overview?league=<ลีก>&type=<หมวด>`
 
-ดึง 9 หมวด: `Currency`, `Fragments`, `UncutGems`, `Essences`, `SoulCores`, `Idols`,
-`Runes`, `Expedition`, `Verisium` (alloy อยู่ในหมวด `Verisium`). ราคาแปลงเป็น divine /
+ดึง 14 หมวด (type ภายในบางตัวไม่ตรง slug): `Currency`, `Fragments`, `UncutGems`,
+`LineageSupportGems`, `Essences`, `SoulCores`, `Idols`, `Runes`, `Expedition`,
+`Verisium`, `Ritual`, `Abyss`, `Breach`, `Delirium`. ราคาแปลงเป็น divine /
 exalted / chaos ผ่าน `core.rates`. การจับคู่ชื่อ: gem (ปักหมุดชนิด+เลเวล) → exact →
-prefix (≥10 ตัว) → fuzzy Levenshtein (>0.84) เพื่อทนชื่อที่ OCR อ่านเพี้ยน
+prefix (≥10 ตัว) → fuzzy Levenshtein (>0.84) + แก้ OCR อ่านเลขเพี้ยน (1↔l/I) ใน parse_quantity
 
 ---
 
