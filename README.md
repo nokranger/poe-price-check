@@ -99,6 +99,11 @@ py -m PyInstaller --onefile --windowed --name "PoE Price Check" ^
 - `--collect-all winrt` = ฝัง Windows OCR binding (จำเป็น ไม่งั้น OCR พังในไฟล์ .exe)
 - build จาก `run.py` (ไม่ใช่ `poe_price/app.py` ตรง ๆ — ไม่งั้น relative import พัง)
 
+**โดน antivirus เตือน?** เป็น false positive ของ PyInstaller (ไฟล์ใหม่ + ไม่ได้เซ็น) ลดได้โดย
+ใช้ **[`build-onedir.bat`](build-onedir.bat)** แทน — build แบบ `--onedir` แล้ว zip (`dist\PoE-Price-Check.zip`)
+โดนแฟลกน้อยกว่า `--onefile` มาก (เพราะไม่แตกไฟล์ลง temp ตอนรัน) + สร้าง SHA256 ให้ผู้ใช้ตรวจสอบด้วย.
+แก้เพิ่ม: รายงาน false positive ที่ microsoft.com/wdsi/filesubmission, หรือเซ็นโค้ดฟรีผ่าน SignPath (OSS)
+
 ---
 
 # ปุ่มลัด & การตั้งค่า
