@@ -27,13 +27,15 @@ BASE_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
 # หมวด (Currency/Runes/Expedition/Verisium/UncutGems) เพราะทำเฉพาะ panel Verisium Remnant —
 # เราดึงกว้างกว่าเพื่อตีราคาของทั่วไปได้. ปรับชุดได้ผ่าน PriceRepository(types=...).
 EXCHANGE_TYPES: tuple[str, ...] = (
-    "Currency", "Fragments", "UncutGems", "Essences", "SoulCores",
-    "Idols", "Runes", "Expedition", "Verisium",
+    "Currency", "Fragments", "UncutGems", "LineageSupportGems", "Essences",
+    "SoulCores", "Idols", "Runes", "Expedition", "Verisium",
 )
 
-# หมวดที่เห็นบนเว็บแต่ slug/endpoint ยังไม่ยืนยัน (อาจว่างในลีกนี้ หรือใช้ endpoint อื่น):
-# AbyssalBones, LineageGems, Omens, LiquidEmotions, Catalysts, UniqueTablets, PrecursorTablets,
-# และของ EQUIPMENT (Unique*). เพิ่มเข้า EXCHANGE_TYPES ได้เมื่อยืนยัน slug แล้ว.
+# หมวดที่เห็นบนเว็บแต่ exchange endpoint นี้ "ไม่ส่งข้อมูล" (คืน 0) — ใช้ API คนละ endpoint:
+#   AbyssalBones, Omens, LiquidEmotions, BreachCatalyst  (fungible แต่อยู่ overview อื่น)
+#   Unique* (weapons/armours/.../relics), UniqueTablets, PrecursorTablets  (item overview แยก)
+# จงใจไม่ดึง: ยิงเปล่าเสีย bandwidth + ของ unique ตีราคาด้วยชื่ออย่างเดียวไม่แม่น (หลาย variant)
+# + ชื่อยาวเสี่ยง fuzzy match ผิด. ถ้าจะรองรับต้องเขียน parser สำหรับ item-overview แยก.
 
 # poe.ninja กรอง bot ด้วย User-Agent/Referer — เลียนแบบ browser ปกติ.
 _USER_AGENT = (
