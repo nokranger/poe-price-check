@@ -35,12 +35,21 @@ class TestParseQuantity(unittest.TestCase):
         self.assertEqual(parse_quantity("5x Chaos Orb"), (5, "Chaos Orb"))
         self.assertEqual(parse_quantity("12X Divine Orb"), (12, "Divine Orb"))
 
-    def test_leading_number_space(self):
-        self.assertEqual(parse_quantity("3 Greater Vision Rune"), (3, "Greater Vision Rune"))
+    def test_requires_x_separator(self):
+        # ในเกมจำนวนเป็นรูป "Nx" เสมอ — บังคับมี x เพื่อกันตัดชื่อที่ขึ้นต้นด้วยตัวอักษรผิด
+        # (เช่น "Body Rune" ไม่ควรโดนมองว่ามีจำนวนนำหน้า)
+        self.assertEqual(parse_quantity("Body Rune"), (1, "Body Rune"))
+        self.assertEqual(parse_quantity("3 Greater Vision Rune"), (1, "3 Greater Vision Rune"))
 
     def test_does_not_eat_level_numbers(self):
         # "level 20" ไม่ใช่จำนวนนำหน้า (ไม่ได้ขึ้นต้นด้วยเลข)
         self.assertEqual(parse_quantity("Uncut Skill Gem Level 20"), (1, "Uncut Skill Gem Level 20"))
+
+    def test_ocr_misread_digit_prefix(self):
+        # OCR อ่าน "1x" เพี้ยนเป็น "lx" / "Ix" / "ix" -> ต้องยังตัดออกเป็นจำนวน 1
+        self.assertEqual(parse_quantity("lx Prismatic Alloy"), (1, "Prismatic Alloy"))
+        self.assertEqual(parse_quantity("Ix Prismatic Alloy"), (1, "Prismatic Alloy"))
+        self.assertEqual(parse_quantity("ix Swift Alloy"), (1, "Swift Alloy"))
 
 
 class TestScanLines(unittest.TestCase):

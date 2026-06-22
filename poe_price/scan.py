@@ -18,15 +18,24 @@ from .matcher import MatchResult
 from .ocr.base import OcrEngine, OcrLine, OcrResult
 from .repository import PriceRepository
 
-# จำนวนนำหน้าชื่อ เช่น "5x Chaos Orb" / "3 Greater Vision Rune" -> แยกออกเป็น multiplier
-_QUANTITY = re.compile(r"^\s*(\d+)\s*[x×]?\s+(?=\D)", re.IGNORECASE)
+# จำนวนนำหน้าชื่อ เช่น "5x Chaos Orb" / "3 Greater Vision Rune" -> แยกออกเป็น multiplier.
+# token จำนวนยอมรับตัวที่ OCR มักอ่านเลขเพี้ยนด้วย (1->l/I/i/|, 0->O, 5->S, 8->B) เพราะ font
+# ในเกมทำให้ "1x" กลายเป็น "lx" บ่อย ทำให้ตัดจำนวนไม่ออก -> ชื่อมี prefix เกิน -> match ไม่เจอ.
+_QUANTITY = re.compile(r"^\s*([0-9lioIsSbB|]{1,3})\s*[x×]\s+(?=\D)", re.IGNORECASE)
+_DIGIT_FIX = str.maketrans({
+    "l": "1", "L": "1", "I": "1", "i": "1", "|": "1",
+    "O": "0", "o": "0", "S": "5", "s": "5", "B": "8", "b": "8",
+})
 
 
 def parse_quantity(text: str) -> tuple[int, str]:
-    """แยกจำนวนนำหน้าออกจากชื่อ. คืน (จำนวน, ชื่อที่เหลือ). ไม่มีจำนวน = 1."""
+    """แยกจำนวนนำหน้าออกจากชื่อ. คืน (จำนวน, ชื่อที่เหลือ). ไม่มีจำนวน = 1.
+    ทน OCR อ่านเลขเพี้ยน เช่น "lx Prismatic Alloy" -> (1, "Prismatic Alloy")."""
     m = _QUANTITY.match(text)
     if m:
-        return int(m.group(1)), text[m.end():].strip()
+        fixed = m.group(1).translate(_DIGIT_FIX)
+        if fixed.isdigit():  # แปลงเป็นเลขได้จริงเท่านั้น ถึงนับเป็นจำนวน + ตัด prefix
+            return max(1, int(fixed)), text[m.end():].strip()
     return 1, text.strip()
 
 
