@@ -128,6 +128,10 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
     support.grid(row=12, column=0, columnspan=2)
     support.bind("<Button-1>", lambda _e: webbrowser.open(SUPPORT_URL))
 
+    # เครดิตแหล่งข้อมูลราคา (มารยาทต่อ poe.ninja)
+    ttk.Label(frm, text="ข้อมูลราคาจาก poe.ninja", style="Big.TLabel",
+              foreground="#888888").grid(row=13, column=0, columnspan=2, pady=(6, 0))
+
     win.transient(parent)
     win.grab_set()
     win.focus_force()
