@@ -25,7 +25,7 @@ _BASE_PT = 12   # ขนาดตัวอักษรหลัก
 _BTN_PT = 13    # ขนาดตัวอักษรปุ่ม
 
 
-def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None) -> tk.Toplevel:
+def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, on_quit=None) -> tk.Toplevel:
     win = tk.Toplevel(parent)
     win.title("PoE Price Check — ตั้งค่า (Settings)")
     win.attributes("-topmost", True)
@@ -102,16 +102,30 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None) 
         win.destroy()
         on_save(result)
 
+    # บันทึก/ยกเลิก = ปิดเฉพาะหน้านี้
     btns = ttk.Frame(frm)
     btns.grid(row=7, column=0, columnspan=2, pady=(18, 0))
     ttk.Button(btns, text="บันทึก (Save)", command=save).grid(row=0, column=0, padx=10)
     ttk.Button(btns, text="ยกเลิก (Cancel)", command=win.destroy).grid(row=0, column=1, padx=10)
 
-    # ปุ่มสนับสนุน (เนียน ๆ ด้านล่าง) — เปิด YouTube membership ในเบราว์เซอร์
-    ttk.Separator(frm, orient="horizontal").grid(row=8, column=0, columnspan=2, sticky="ew", pady=(16, 8))
+    # ปุ่มปิดโปรแกรม (เผื่อคนไม่รู้ปุ่มลัด Ctrl+Alt+Q) — แยกชัด ไม่ให้สับสนกับ Cancel
+    if on_quit is not None:
+        ttk.Separator(frm, orient="horizontal").grid(row=8, column=0, columnspan=2, sticky="ew", pady=(16, 6))
+
+        def quit_app() -> None:
+            win.destroy()
+            on_quit()
+
+        ttk.Button(frm, text="⨯  ปิดโปรแกรม (Quit)", command=quit_app).grid(
+            row=9, column=0, columnspan=2, pady=(2, 0))
+        ttk.Label(frm, text="(หรือกด Ctrl+Alt+Q ได้ทุกเมื่อ)", style="Big.TLabel",
+                  foreground="#888888").grid(row=10, column=0, columnspan=2)
+
+    # ปุ่มสนับสนุน (เนียน ๆ ด้านล่างสุด) — เปิด YouTube membership ในเบราว์เซอร์
+    ttk.Separator(frm, orient="horizontal").grid(row=11, column=0, columnspan=2, sticky="ew", pady=(14, 8))
     support = ttk.Label(frm, text="❤  สนับสนุนผู้พัฒนา — สมัครสมาชิกช่อง Nokranger (YouTube)",
                         foreground="#cc0000", cursor="hand2", style="Big.TLabel")
-    support.grid(row=9, column=0, columnspan=2)
+    support.grid(row=12, column=0, columnspan=2)
     support.bind("<Button-1>", lambda _e: webbrowser.open(SUPPORT_URL))
 
     win.transient(parent)

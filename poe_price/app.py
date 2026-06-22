@@ -147,7 +147,8 @@ class App:
     def _open_settings(self) -> None:
         from .settings import open_settings
 
-        open_settings(self.overlay.root, self.config, self._apply_settings, self._refresh_now)
+        open_settings(self.overlay.root, self.config, self._apply_settings,
+                      self._refresh_now, lambda: self.queue.put(("quit", None)))
 
     def _apply_settings(self, new: dict) -> None:
         c = self.config
