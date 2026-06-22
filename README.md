@@ -18,13 +18,15 @@
 
 ## ภาพตัวอย่าง (Screenshots)
 
-ราคาโผล่ข้างของแต่ละชิ้น สลับหน่วยเงินได้ (divine / exalted / chaos):
+ราคาโผล่ข้างของแต่ละชิ้น — กด **F6** สลับหน่วยเงินได้สด ๆ:
 
-![overlay ในเกม](docs/overlay.png)
+| divine | exalted | chaos |
+|:---:|:---:|:---:|
+| ![divine](docs/divine.png) | ![exalted](docs/exalt.png) | ![chaos](docs/chaos.png) |
 
-หน้าตั้งค่า (กด F8) — เลือกลีก / หน่วยเงิน / ปุ่มลัด / ความทึบ:
+หน้าตั้งค่า (กด F8) — เลือกลีก / หน่วยเงิน / ปุ่มลัด / ความทึบ / ปิดโปรแกรม:
 
-![settings](docs/settings.png)
+![settings](docs/setting.png)
 
 ---
 
