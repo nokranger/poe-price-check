@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# PyInstaller build output
+build/
+dist/
+*.spec
+
+# editor / IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# logs / สิ่งที่อาจหลุดมาตอน debug
+*.log
+log.txt
+*.bmp

@@ -1,0 +1,16 @@
+# --- price core (ดึงราคา + fuzzy match) ---
+# ไม่มี dependency เลย — ใช้ standard library ล้วน
+
+# --- OCR (ฟีเจอร์อ่านหน้าจอ) ---
+# binding ทางการของ Microsoft สำหรับเรียก Windows OCR ในตัว Windows
+# (ส่วนจับภาพหน้าจอใช้ ctypes ล้วน ไม่ต้องมี dep)
+winrt-runtime==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1
+winrt-Windows.Globalization==3.2.1
+winrt-Windows.Graphics.Imaging==3.2.1
+winrt-Windows.Media.Ocr==3.2.1
+winrt-Windows.Storage.Streams==3.2.1
+
+# --- สำหรับ build เป็น .exe portable (ติดตั้งเฉพาะตอนจะแจก) ---
+# pyinstaller
