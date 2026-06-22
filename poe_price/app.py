@@ -205,10 +205,35 @@ class App:
             from .scan import scan_lines
 
             rows = scan_lines(self.repo, self._engine.recognize(capture_screen()))
+            self._dump_debug(rows)
             self.queue.put(("show", rows))
         except Exception as exc:
             self._busy = False
             self.queue.put(("status", f"สแกนพลาด: {exc}"))
+
+    def _dump_debug(self, rows) -> None:
+        """เขียนผลสแกนล่าสุดลง last_scan.txt (เขียนทับทุกครั้ง) — ไว้ดูว่า OCR อ่านอะไร
+        และ match อะไร เวลาราคาบางตัวไม่ขึ้น. อยู่ที่ %LOCALAPPDATA%\\PoePriceHelper\\last_scan.txt"""
+        try:
+            import os
+
+            from .config import data_dir
+
+            lines = []
+            for r in rows:
+                if r.matched:
+                    e = r.result.entry
+                    val = "no-market" if not e.has_market_data else f"{e.exalted_value:g}ex"
+                    tag = f"-> {r.result.key} [{r.result.method}] {val}"
+                elif r.result.is_gem:
+                    tag = "-> gem unknown (?)"
+                else:
+                    tag = "-> MISS"
+                lines.append(f"{r.line.text!r}  {tag}")
+            with open(os.path.join(data_dir(), "last_scan.txt"), "w", encoding="utf-8") as f:
+                f.write(f"OCR อ่านได้ {len(rows)} บรรทัด:\n\n" + "\n".join(lines) + "\n")
+        except Exception:
+            pass
 
     # ---- rendering (Tk thread) ---------------------------------------------
 
