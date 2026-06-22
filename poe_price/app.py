@@ -57,15 +57,24 @@ class App:
     # ---- lifecycle ---------------------------------------------------------
 
     def run(self) -> None:
-        print("กำลังดึงราคาครั้งแรก ...")
-        self.repo.start_auto_refresh()  # ดึงทันที + รีเฟรชทุก 30 นาทีเบื้องหลัง
-
         self._start_hotkeys()
-        c = self.config
-        self._status(f"พร้อม ({c.currency}) — {c.toggle_key} แสดง/ซ่อน · {c.currency_key} หน่วยเงิน · "
-                     f"F8 ตั้งค่า · Ctrl+Alt+Q ออก")
+        # ดึงราคาครั้งแรกแบบ background (ไม่บล็อกหน้าจอ) + บอกสถานะจริงว่าได้/ไม่ได้
+        # เดิมดึงแบบบล็อกก่อนเปิดจอ + ขึ้น "พร้อม" เสมอ ทำให้ถ้าดึงพลาดผู้ใช้ไม่รู้ ต้องไปกด refresh เอง
+        self._status(f"กำลังดึงราคาครั้งแรก ({self.config.league})… รอสักครู่")
         self.overlay.root.after(50, self._poll)
+        self.overlay.root.after(150, lambda: threading.Thread(target=self._initial_fetch, daemon=True).start())
         self.overlay.root.mainloop()
+
+    def _initial_fetch(self) -> None:
+        """ดึงราคาครั้งแรก + ตั้ง auto-refresh ทุก 30 นาที. รายงานผลจริงผ่าน status."""
+        self.repo.start_auto_refresh()
+        c = self.config
+        n = self.repo.item_count
+        if n > 0:
+            self.queue.put(("status", f"พร้อม! ได้ราคา {n} รายการ — {c.toggle_key} แสดง/ซ่อน · "
+                                       f"{c.currency_key} หน่วยเงิน · F8 ตั้งค่า"))
+        else:
+            self.queue.put(("status", "ดึงราคาไม่ได้ (เช็คเน็ต/ชื่อลีก) — กด F8 → 'ดึงราคาใหม่ตอนนี้'"))
 
     def _start_hotkeys(self) -> None:
         """สร้าง+เริ่ม HotkeyListener จากปุ่มใน config (เรียกซ้ำได้ตอนเปลี่ยนปุ่ม)."""
