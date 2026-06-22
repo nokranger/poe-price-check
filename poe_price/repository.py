@@ -78,6 +78,12 @@ class PriceRepository:
         for partial in results:
             merged.update(partial)
 
+        # ถ้าดึงรอบนี้ไม่ได้อะไรเลย (น่าจะเน็ตหลุดชั่วคราว) แต่เคยมีราคาแล้ว -> คงราคาเดิมไว้
+        # ไม่งั้น auto-refresh ที่พลาดจะทำให้ราคาหายหมดจนกว่าจะถึงรอบถัดไป
+        if not merged and self.item_count > 0:
+            print("[PriceRepository] refresh ได้ 0 รายการ (เน็ตหลุด?) — คงราคาเดิมไว้")
+            return self.snapshot
+
         keys_by_length: dict[int, list[str]] = {}
         for key in merged:
             keys_by_length.setdefault(len(key), []).append(key)
