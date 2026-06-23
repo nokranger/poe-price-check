@@ -16,7 +16,7 @@ from .config import AppConfig
 from .hotkeys import KEY_ORDER
 
 _CURRENCIES = ["divine", "exalted", "chaos"]
-_LEAGUE_SUGGESTIONS = ["Runes of Aldur", "Standard"]
+_LEAGUE_SUGGESTIONS = ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
 
 # ลิงก์สนับสนุน (YouTube membership) — เปิดในเบราว์เซอร์ ไม่ล็อกฟีเจอร์ใด ๆ
 SUPPORT_URL = "https://www.youtube.com/c/NokrangerChannel/join"
