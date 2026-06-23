@@ -1,8 +1,7 @@
-"""หน้าต่างตั้งค่า (Settings) — เลือกลีก / หน่วยเงิน / ปุ่มลัด / ความทึบ.
+"""หน้าต่างตั้งค่า (Settings) + หน้าวิธีใช้งาน (Help).
 
 เป็นหน้าต่าง Tk ปกติ (มีกรอบ คลิกได้) แยกจาก overlay ที่คลิกทะลุ. เปิดด้วยปุ่ม F8.
-กดบันทึกแล้วเรียก callback on_save(dict) ให้ App ไปปรับใช้ + เซฟลง config.
-ข้อความสองภาษา (ไทย/อังกฤษ) ตัวอักษรใหญ่อ่านง่าย.
+ใช้ฟอนต์ Leelawadee UI (ไทยคมชัด) + ตัวหนา ให้อ่านง่าย.
 """
 
 from __future__ import annotations
@@ -21,8 +20,73 @@ _LEAGUE_SUGGESTIONS = ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
 # ลิงก์สนับสนุน (YouTube membership) — เปิดในเบราว์เซอร์ ไม่ล็อกฟีเจอร์ใด ๆ
 SUPPORT_URL = "https://www.youtube.com/c/NokrangerChannel/join"
 
-_BASE_PT = 12   # ขนาดตัวอักษรหลัก
-_BTN_PT = 13    # ขนาดตัวอักษรปุ่ม
+# ฟอนต์ที่ไทยคมชัด (มีในทุก Windows; ถ้าไม่มี Tk จะ fallback ให้เอง)
+_FONT = "Leelawadee UI"
+_FG = "#1a1a1a"          # สีตัวอักษรเข้ม อ่านชัด
+
+
+def _fonts():
+    return {
+        "base": tkfont.Font(family=_FONT, size=12),
+        "label": tkfont.Font(family=_FONT, size=12, weight="bold"),
+        "btn": tkfont.Font(family=_FONT, size=13, weight="bold"),
+        "head": tkfont.Font(family=_FONT, size=15, weight="bold"),
+    }
+
+
+def open_help(parent: tk.Misc) -> tk.Toplevel:
+    """หน้าต่าง 'วิธีใช้งาน' — อธิบายการใช้งานเป็นภาษาไทยชัด ๆ."""
+    win = tk.Toplevel(parent)
+    win.title("วิธีใช้งาน — PoE Price Check")
+    win.attributes("-topmost", True)
+    win.resizable(False, False)
+    f = _fonts()
+
+    txt = tk.Text(win, width=50, height=28, wrap="word", font=f["base"],
+                  bg="#ffffff", fg=_FG, padx=20, pady=16, relief="flat",
+                  cursor="arrow", spacing2=2)
+    txt.tag_configure("h", font=f["head"], foreground="#10508c", spacing1=12, spacing3=6)
+    txt.tag_configure("b", font=f["label"])
+
+    def add(text: str, tag: str | None = None):
+        txt.insert("end", text + "\n", tag) if tag else txt.insert("end", text + "\n")
+
+    add("วิธีใช้งาน 4 ขั้นตอน", "h")
+    add("1. ตั้งเกมเป็นโหมด Windowed หรือ Borderless")
+    add("    (ห้าม Fullscreen เด็ดขาด — ไม่งั้นจอดำ ราคาไม่ขึ้น)")
+    add("2. เปิดโปรแกรม รอมุมซ้ายบนขึ้น “พร้อม! ได้ราคา…”")
+    add("3. ในเกม เปิดหน้าต่างของ / ค่าเงิน / รางวัล")
+    add("4. กด F9 → ราคาจะโผล่ข้างของแต่ละชิ้น (กดอีกครั้ง = ซ่อน)")
+
+    add("ปุ่มลัด", "h")
+    add("F9     แสดง / ซ่อนราคา")
+    add("F6     สลับหน่วยเงิน (divine / exalted / chaos)")
+    add("F8     เปิดหน้าตั้งค่า")
+    add("Ctrl + Alt + Q     ปิดโปรแกรม")
+
+    add("เคล็ดลับ", "h")
+    add("•  เลื่อนหน้า/เปลี่ยนของ แล้วกด F9 ใหม่ เพื่ออ่านอีกรอบ")
+    add("•  เปลี่ยนลีกได้ในช่อง League (เช่น HC Runes of Aldur)")
+    add("•  ราคาอัปเดตเองทุก 30 นาที — อยากได้สดกด “ดึงราคาใหม่ตอนนี้”")
+
+    add("ราคาไม่ขึ้น? เช็คนี่", "h")
+    add("•  เกมต้องเป็น Windowed / Borderless")
+    add("•  ถ้าขึ้น “ดึงราคาไม่ได้” → กด “ดึงราคาใหม่ตอนนี้”")
+    add("•  ของบางชนิด (unique / เจมตัด) ยังไม่รองรับ")
+
+    txt.configure(state="disabled")
+    txt.pack(fill="both", expand=True)
+
+    style = ttk.Style(win)
+    style.configure("Help.TButton", font=f["btn"], padding=(24, 10))
+    ttk.Button(win, text="ปิด (Close)", style="Help.TButton",
+               command=win.destroy).pack(pady=(0, 16))
+
+    win.transient(parent)
+    win.grab_set()
+    win.focus_force()
+    win.update_idletasks()
+    return win
 
 
 def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, on_quit=None) -> tk.Toplevel:
@@ -30,15 +94,14 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
     win.title("PoE Price Check — ตั้งค่า (Settings)")
     win.attributes("-topmost", True)
     win.resizable(False, False)
-
-    base = tkfont.Font(family="Segoe UI", size=_BASE_PT)
-    btn_font = tkfont.Font(family="Segoe UI", size=_BTN_PT, weight="bold")
+    f = _fonts()
 
     style = ttk.Style(win)
-    style.configure(".", font=base)                       # ทุก ttk widget ใช้ฟอนต์นี้
-    style.configure("TButton", font=btn_font, padding=(26, 12))
-    style.configure("Big.TLabel", font=base)
-    win.option_add("*TCombobox*Listbox.font", base)       # ฟอนต์ใน dropdown
+    style.configure(".", font=f["base"])
+    style.configure("TButton", font=f["btn"], padding=(26, 12))
+    style.configure("Lbl.TLabel", font=f["label"], foreground=_FG)      # ป้ายตัวหนา เข้ม
+    style.configure("Dim.TLabel", font=f["base"], foreground="#777777")
+    win.option_add("*TCombobox*Listbox.font", f["base"])
     win.option_add("*TCombobox*Listbox.selectBackground", "#3478f6")
 
     frm = ttk.Frame(win, padding=20)
@@ -46,27 +109,30 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
     pad = {"padx": 10, "pady": 8}
 
     def row_label(r: int, text: str) -> None:
-        ttk.Label(frm, text=text, style="Big.TLabel").grid(row=r, column=0, sticky="w", **pad)
+        ttk.Label(frm, text=text, style="Lbl.TLabel").grid(row=r, column=0, sticky="w", **pad)
+
+    # ปุ่มวิธีใช้งาน (เด่นบนสุด — คนไม่อ่านหน้าเว็บจะได้เห็นในแอป)
+    ttk.Button(frm, text="📖  วิธีใช้งานโปรแกรม (How to use)",
+               command=lambda: open_help(win)).grid(row=0, column=0, columnspan=2,
+                                                     sticky="ew", padx=10, pady=(0, 6))
+    ttk.Separator(frm, orient="horizontal").grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
     # ลีก
-    row_label(0, "ลีก (League)")
-    league_frame = ttk.Frame(frm)
-    league_frame.grid(row=0, column=1, sticky="w", **pad)
+    row_label(2, "ลีก (League)")
     league_var = tk.StringVar(value=config.league)
-    ttk.Combobox(league_frame, textvariable=league_var, width=22, font=base,
-                 values=_LEAGUE_SUGGESTIONS).grid(row=0, column=0)
-    # ปุ่มดึงราคาใหม่ทันที (ไม่ต้องรอรอบ 30 นาที)
+    ttk.Combobox(frm, textvariable=league_var, width=24, font=f["base"],
+                 values=_LEAGUE_SUGGESTIONS).grid(row=2, column=1, **pad)
     if on_refresh is not None:
         ttk.Button(frm, text="ดึงราคาใหม่ตอนนี้ (Refresh prices)",
                    command=lambda: (on_refresh(),
                                     msg.config(text="กำลังดึงราคาใหม่… (refreshing)", foreground="#2d7d2d"))
-                   ).grid(row=1, column=0, columnspan=2, sticky="w", padx=10, pady=(0, 4))
+                   ).grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=(0, 4))
 
     # หน่วยเงิน
-    row_label(2, "หน่วยเงิน (Currency)")
+    row_label(4, "หน่วยเงิน (Currency)")
     currency_var = tk.StringVar(value=config.currency)
-    ttk.Combobox(frm, textvariable=currency_var, width=24, state="readonly", font=base,
-                 values=_CURRENCIES).grid(row=2, column=1, **pad)
+    ttk.Combobox(frm, textvariable=currency_var, width=24, state="readonly", font=f["base"],
+                 values=_CURRENCIES).grid(row=4, column=1, **pad)
 
     # ปุ่มลัด
     toggle_var = tk.StringVar(value=config.toggle_key)
@@ -74,19 +140,19 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
     for r, (label, var) in enumerate([
         ("ปุ่มแสดง/ซ่อน (Show/Hide)", toggle_var),
         ("ปุ่มสลับหน่วยเงิน (Switch Currency)", currkey_var),
-    ], start=3):
+    ], start=5):
         row_label(r, label)
-        ttk.Combobox(frm, textvariable=var, width=24, state="readonly", font=base,
+        ttk.Combobox(frm, textvariable=var, width=24, state="readonly", font=f["base"],
                      values=KEY_ORDER).grid(row=r, column=1, **pad)
 
     # ความทึบ
-    row_label(5, "ความทึบ (Opacity)")
+    row_label(7, "ความทึบ (Opacity)")
     alpha_var = tk.IntVar(value=config.window_alpha)
     ttk.Scale(frm, from_=60, to=255, variable=alpha_var, orient="horizontal",
-              length=210).grid(row=5, column=1, **pad)
+              length=210).grid(row=7, column=1, **pad)
 
-    msg = ttk.Label(frm, text="", style="Big.TLabel", foreground="#c0392b")
-    msg.grid(row=6, column=0, columnspan=2, sticky="w", padx=10)
+    msg = ttk.Label(frm, text="", style="Lbl.TLabel", foreground="#c0392b")
+    msg.grid(row=8, column=0, columnspan=2, sticky="w", padx=10)
 
     def save() -> None:
         if toggle_var.get() == currkey_var.get():
@@ -102,35 +168,30 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
         win.destroy()
         on_save(result)
 
-    # บันทึก/ยกเลิก = ปิดเฉพาะหน้านี้
     btns = ttk.Frame(frm)
-    btns.grid(row=7, column=0, columnspan=2, pady=(18, 0))
+    btns.grid(row=9, column=0, columnspan=2, pady=(18, 0))
     ttk.Button(btns, text="บันทึก (Save)", command=save).grid(row=0, column=0, padx=10)
     ttk.Button(btns, text="ยกเลิก (Cancel)", command=win.destroy).grid(row=0, column=1, padx=10)
 
-    # ปุ่มปิดโปรแกรม (เผื่อคนไม่รู้ปุ่มลัด Ctrl+Alt+Q) — แยกชัด ไม่ให้สับสนกับ Cancel
     if on_quit is not None:
-        ttk.Separator(frm, orient="horizontal").grid(row=8, column=0, columnspan=2, sticky="ew", pady=(16, 6))
+        ttk.Separator(frm, orient="horizontal").grid(row=10, column=0, columnspan=2, sticky="ew", pady=(16, 6))
 
         def quit_app() -> None:
             win.destroy()
             on_quit()
 
-        ttk.Button(frm, text="⨯  ปิดโปรแกรม (Quit)", command=quit_app).grid(
-            row=9, column=0, columnspan=2, pady=(2, 0))
-        ttk.Label(frm, text="(หรือกด Ctrl+Alt+Q ได้ทุกเมื่อ)", style="Big.TLabel",
-                  foreground="#888888").grid(row=10, column=0, columnspan=2)
+        ttk.Button(frm, text="⨯  ปิดโปรแกรม (Quit)", command=quit_app).grid(row=11, column=0, columnspan=2, pady=(2, 0))
+        ttk.Label(frm, text="(หรือกด Ctrl+Alt+Q ได้ทุกเมื่อ)", style="Dim.TLabel").grid(
+            row=12, column=0, columnspan=2)
 
-    # ปุ่มสนับสนุน (เนียน ๆ ด้านล่างสุด) — เปิด YouTube membership ในเบราว์เซอร์
-    ttk.Separator(frm, orient="horizontal").grid(row=11, column=0, columnspan=2, sticky="ew", pady=(14, 8))
+    ttk.Separator(frm, orient="horizontal").grid(row=13, column=0, columnspan=2, sticky="ew", pady=(14, 8))
     support = ttk.Label(frm, text="❤  สนับสนุนผู้พัฒนา — สมัครสมาชิกช่อง Nokranger (YouTube)",
-                        foreground="#cc0000", cursor="hand2", style="Big.TLabel")
-    support.grid(row=12, column=0, columnspan=2)
+                        foreground="#cc0000", cursor="hand2", style="Lbl.TLabel")
+    support.grid(row=14, column=0, columnspan=2)
     support.bind("<Button-1>", lambda _e: webbrowser.open(SUPPORT_URL))
 
-    # เครดิตแหล่งข้อมูลราคา (มารยาทต่อ poe.ninja)
-    ttk.Label(frm, text="ข้อมูลราคาจาก poe.ninja", style="Big.TLabel",
-              foreground="#888888").grid(row=13, column=0, columnspan=2, pady=(6, 0))
+    ttk.Label(frm, text="ข้อมูลราคาจาก poe.ninja", style="Dim.TLabel").grid(
+        row=15, column=0, columnspan=2, pady=(6, 0))
 
     win.transient(parent)
     win.grab_set()
