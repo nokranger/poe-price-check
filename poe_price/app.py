@@ -82,14 +82,15 @@ class App:
             self._hotkeys.stop()
             self._hotkeys.join(timeout=1.5)  # รอให้ตัวเก่าปล่อยปุ่มก่อน กันชนกับปุ่มเดิม
         c = self.config
+        # ลงทะเบียน "ทางออกฉุกเฉิน" (เปิด Settings = F8, ออก = Ctrl+Alt+Q) ก่อนเสมอ —
+        # ถ้าผู้ใช้เผลอตั้งปุ่มอื่นชน F8 ตัวที่ลงก่อนจะชนะ -> ยังเปิด Settings ไปแก้ได้
         self._hotkeys = HotkeyListener({
+            _HK_SETTINGS: (0, _VK_F8, lambda: self.queue.put(("settings", None))),
+            _HK_QUIT: (MOD_CONTROL | MOD_ALT, _VK_Q, lambda: self.queue.put(("quit", None))),
             _HK_TOGGLE: (0, key_name_to_vk(c.toggle_key, 0x78),
                          lambda: self.queue.put(("toggle", None))),
             _HK_CURRENCY: (0, key_name_to_vk(c.currency_key, 0x75),
                            lambda: self.queue.put(("currency", None))),
-            _HK_SETTINGS: (0, _VK_F8, lambda: self.queue.put(("settings", None))),
-            # Ctrl+Alt+Q เพื่อออก — ใส่ modifier กันชนปุ่ม Q ในเกม
-            _HK_QUIT: (MOD_CONTROL | MOD_ALT, _VK_Q, lambda: self.queue.put(("quit", None))),
         })
         self._hotkeys.start()
 

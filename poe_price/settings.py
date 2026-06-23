@@ -155,6 +155,10 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
     msg.grid(row=8, column=0, columnspan=2, sticky="w", padx=10)
 
     def save() -> None:
+        if "F8" in (toggle_var.get(), currkey_var.get()):
+            msg.config(text="F8 สงวนไว้สำหรับเปิดหน้านี้ — เลือกปุ่มอื่น  (F8 is reserved)",
+                       foreground="#c0392b")
+            return
         if toggle_var.get() == currkey_var.get():
             msg.config(text="ปุ่มลัดซ้ำกัน — เลือกไม่ให้ซ้ำ  (duplicate keys)", foreground="#c0392b")
             return
