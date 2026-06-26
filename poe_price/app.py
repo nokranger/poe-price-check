@@ -258,12 +258,21 @@ class App:
         """แปลงผลสแกนเป็นป้ายราคา — วาด "ข้างขวาของแต่ละชิ้น" (ใช้ได้ทั้ง list และ grid).
         พิกัด OCR อิงมุมซ้ายบนของภาพที่จับ จึงบวก offset ของ region (ถ้าล็อกพื้นที่ไว้)
         ให้กลายเป็นพิกัดจอจริง."""
+        from .specials import match_special
+
         off_x, off_y = (region[0], region[1]) if region is not None else (0, 0)
         items: list[OverlayItem] = []
         for r in rows:
             bx, by, bw, bh = r.line.bbox
             x = off_x + bx + bw + 8       # ชิดขวาของชื่อชิ้นนั้น
             y = off_y + by + bh / 2
+            # ของพิเศษ/มุกปั่น ๆ (เช่น Random Currency -> กระจก, Unique -> Mageblood)
+            # เช็คก่อนราคาปกติ เพราะชื่อพวกนี้ไม่มีใน poe.ninja อยู่แล้ว
+            special = match_special(r.line.text)
+            if special is not None:
+                items.append(OverlayItem(x, y, special.text, unit=special.icon,
+                                         color=special.color))
+                continue
             if r.matched:
                 e = r.result.entry
                 if not e.has_market_data:
