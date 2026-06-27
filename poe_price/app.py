@@ -341,8 +341,8 @@ def _warn_already_running() -> None:
     ctypes.windll.user32.MessageBoxW(
         None,
         "PoE Price Check กำลังเปิดอยู่แล้ว\n\n"
-        "ดูที่ทาสก์บาร์ (ไอคอนมุมขวาล่าง/หน้าต่างเดิม) หรือกด Ctrl+Alt+Q "
-        "เพื่อปิดตัวเดิมก่อน แล้วค่อยเปิดใหม่",
+        "ปิดตัวเดิมก่อน แล้วค่อยเปิดใหม่ — กด Ctrl+Alt+Q "
+        "หรือกด F8 เพื่อเข้าตั้งค่าแล้วปิดโปรแกรม",
         "PoE Price Check",
         0x40,  # MB_ICONINFORMATION
     )
