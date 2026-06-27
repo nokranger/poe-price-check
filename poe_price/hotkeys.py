@@ -60,11 +60,17 @@ class HotkeyListener(threading.Thread):
         self._bindings = bindings
         self._thread_id = 0
         self._ready = threading.Event()
+        self.failed: set[int] = set()  # id ปุ่มที่จองไม่ได้ (ถูกโปรแกรมอื่นจองไปแล้ว)
+
+    def wait_ready(self, timeout: float = 1.5) -> bool:
+        """รอจน thread ลงทะเบียนปุ่มเสร็จ (เพื่ออ่าน .failed ได้ถูกต้อง)."""
+        return self._ready.wait(timeout)
 
     def run(self) -> None:
         self._thread_id = _kernel32.GetCurrentThreadId()
         for hotkey_id, (mods, vk, _) in self._bindings.items():
             if not _user32.RegisterHotKey(None, hotkey_id, mods | _MOD_NOREPEAT, vk):
+                self.failed.add(hotkey_id)
                 print(f"[hotkeys] ลงทะเบียนปุ่ม id={hotkey_id} ไม่ได้ (อาจมีโปรแกรมอื่นใช้อยู่)")
         self._ready.set()
 

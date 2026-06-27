@@ -93,12 +93,30 @@ class App:
                            lambda: self.queue.put(("currency", None))),
         })
         self._hotkeys.start()
+        # ถ้าจองปุ่มไหนไม่ได้ (โปรแกรมอื่นจองไว้) เตือนผู้ใช้ แทนที่จะเงียบแล้วปุ่มตาย
+        self.overlay.root.after(900, self._warn_failed_hotkeys)
+
+    def _warn_failed_hotkeys(self) -> None:
+        hk = self._hotkeys
+        if hk is None or not hk.wait_ready(0):
+            return
+        names = {
+            _HK_TOGGLE: self.config.toggle_key, _HK_CURRENCY: self.config.currency_key,
+            _HK_SETTINGS: "F8", _HK_QUIT: "Ctrl+Alt+Q",
+        }
+        bad = [names.get(i, str(i)) for i in sorted(hk.failed)]
+        if bad:
+            self._status("ปุ่มลัดถูกโปรแกรมอื่นใช้อยู่: " + ", ".join(bad)
+                         + " — ปิดโปรแกรมที่เปิดซ้อน/แอปอื่น หรือเปลี่ยนปุ่มใน F8")
 
     def stop(self) -> None:
         self._running = False
         self.repo.stop()
         if self._hotkeys:
             self._hotkeys.stop()
+            # รอให้ thread ปุ่มลัด "ถอนทะเบียนปุ่ม (UnregisterHotKey)" ให้เสร็จก่อน —
+            # ไม่งั้นปุ่ม global อาจค้างถูกจองไว้ ทำให้เปิดรอบหน้าจองปุ่มไม่ได้/ปิดไม่ได้
+            self._hotkeys.join(timeout=1.5)
         self.overlay.destroy()
 
     # ---- queue pump (รันบน Tk thread) -------------------------------------
@@ -298,6 +316,38 @@ class App:
         )
 
 
+_MUTEX_NAME = "PoePriceCheck_SingleInstance_Mutex_v1"
+_ERROR_ALREADY_EXISTS = 183
+
+
+def _acquire_single_instance():
+    """จองชื่อ mutex ของ Windows. คืน handle ถ้าเป็นอินสแตนซ์แรก; คืน None ถ้ามี
+    โปรแกรมเปิดอยู่แล้ว. ป้องกันเปิดซ้อน — ซึ่งทำให้ตัวที่ 2+ จองปุ่มลัด (รวม Ctrl+Alt+Q)
+    ไม่ได้เลย แล้วกลายเป็นปิดไม่ได้ ต้องไปฆ่าใน Task Manager."""
+    import ctypes
+
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.CreateMutexW(None, False, _MUTEX_NAME)
+    if not handle:
+        return True  # จอง mutex ไม่ได้ด้วยเหตุผลแปลก ๆ -> อย่าบล็อก ปล่อยให้รันต่อ
+    if kernel32.GetLastError() == _ERROR_ALREADY_EXISTS:
+        return None
+    return handle
+
+
+def _warn_already_running() -> None:
+    import ctypes
+
+    ctypes.windll.user32.MessageBoxW(
+        None,
+        "PoE Price Check กำลังเปิดอยู่แล้ว\n\n"
+        "ดูที่ทาสก์บาร์ (ไอคอนมุมขวาล่าง/หน้าต่างเดิม) หรือกด Ctrl+Alt+Q "
+        "เพื่อปิดตัวเดิมก่อน แล้วค่อยเปิดใหม่",
+        "PoE Price Check",
+        0x40,  # MB_ICONINFORMATION
+    )
+
+
 def main() -> int:
     import argparse
     import os
@@ -340,6 +390,14 @@ def main() -> int:
             print(f"SELFTEST FAIL: {exc}")
             return 1
 
+    # กันเปิดซ้อน: ถ้ามีตัวเปิดอยู่แล้ว เด้งเตือนสั้น ๆ แล้วออก (อย่าเปิดตัวที่ 2
+    # ที่จองปุ่มลัดไม่ได้ -> ปิดไม่ได้ -> ค้างใน Task Manager). ถือ handle ไว้ทั้งโปรเซส
+    _mutex = _acquire_single_instance()
+    if _mutex is None:
+        print("มีโปรแกรมเปิดอยู่แล้ว — ไม่เปิดซ้อน")
+        _warn_already_running()
+        return 0
+
     config = AppConfig.load()
     if args.league:
         config.league = args.league
@@ -348,6 +406,15 @@ def main() -> int:
     print(f"เปิด overlay — {config.toggle_key} แสดง/ซ่อน · {config.currency_key} หน่วยเงิน · "
           f"F8 ตั้งค่า · Ctrl+Alt+Q ออก")
     App(config).run()
+
+    # การันตีปิดสนิท: หลัง mainloop จบ บังคับจบโปรเซสทันที กัน native thread (message
+    # loop ของปุ่มลัด ฯลฯ) ค้างจน .exe ไม่ยอมหายไปจาก Task Manager
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except Exception:
+            pass
+    os._exit(0)
     return 0
 
 
