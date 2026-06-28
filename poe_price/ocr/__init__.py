@@ -14,7 +14,11 @@ __all__ = ["OcrEngine", "OcrResult", "OcrLine", "OcrWord", "create_default_engin
 
 def create_default_engine() -> OcrEngine:
     """สร้าง engine เริ่มต้น (Windows OCR ในตัว Windows). โหลดแบบ lazy เพื่อ
-    ไม่ดึง winrt มาตอน import ส่วนที่ไม่เกี่ยวกับ OCR (เช่น price core)."""
+    ไม่ดึง winrt มาตอน import ส่วนที่ไม่เกี่ยวกับ OCR (เช่น price core).
+
+    scale=3: ขยายภาพ 3 เท่าก่อน OCR — ช่วยให้อ่านฟอนต์ลายมือของ Island Rumours
+    (เช่น "It's dry at least...") แม่นขึ้น. จอ 4K จะถูกลดเหลือ 2x อัตโนมัติถ้าเกิน
+    ขนาดสูงสุดที่ OCR รับได้ (กันภาพใหญ่เกิน)."""
     from .windows_ocr import WindowsOcrEngine
 
-    return WindowsOcrEngine()
+    return WindowsOcrEngine(scale=3)

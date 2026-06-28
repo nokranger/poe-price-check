@@ -268,9 +268,25 @@ class App:
     def _render_rows(self) -> None:
         items = self._rows_to_items(self._last_rows, None, self.config.currency)
         self.overlay.render(items)
+        rumours = self._find_rumours(self._last_rows)
+        if rumours:
+            top = min(line.bbox[1] for _, line in rumours)
+            right = max(line.bbox[0] + line.bbox[2] for _, line in rumours)
+            self.overlay.draw_rumour_panel([r for r, _ in rumours], right + 40, top)
         priced = sum(1 for r in self._last_rows if r.matched and r.result.entry.has_market_data)
-        self._status(f"เจอ {priced} ราคา ({self.config.currency}) — {self.config.toggle_key} ซ่อน · "
+        extra = f" · ข่าวลือ {len(rumours)}" if rumours else ""
+        self._status(f"เจอ {priced} ราคา ({self.config.currency}){extra} — {self.config.toggle_key} ซ่อน · "
                      f"{self.config.currency_key} หน่วยเงิน")
+
+    def _find_rumours(self, rows):
+        """หาข่าวลือ Expedition จากบรรทัด OCR. คืน list ของ (Rumour, OcrLine) ไม่ซ้ำชื่อ.
+        จับเฉพาะช่วง "Island Rumours".."Requires" (กัน false positive จากหัวหน้าต่าง/
+        หน้าเช็คราคา). เรียงตามตำแหน่งบนลงล่างก่อน เพื่อหาขอบเขตให้ถูก."""
+        from .expedition import find_in_lines
+
+        ordered = sorted(rows, key=lambda r: r.line.center_y)
+        matches = find_in_lines([r.line.text for r in ordered])
+        return [(rumour, ordered[i].line) for i, rumour in matches]
 
     def _rows_to_items(self, rows, region, unit) -> list[OverlayItem]:
         """แปลงผลสแกนเป็นป้ายราคา — วาด "ข้างขวาของแต่ละชิ้น" (ใช้ได้ทั้ง list และ grid).

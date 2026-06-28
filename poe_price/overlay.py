@@ -39,6 +39,27 @@ _BG_PAD_Y = 2
 _FONT = ("Segoe UI", 12, "bold")
 _ICON_TARGET = 22  # px ความสูงไอคอนที่ต้องการ (รูปต้นฉบับ 64px -> subsample)
 
+# ---- panel ข่าวลือ Expedition (ตาราง Rumour | Map | Mods | Rating) ----
+_PANEL_FONT = ("Segoe UI", 11)
+_PANEL_HEAD_FONT = ("Segoe UI", 10, "bold")
+_PANEL_BG = "#0a0a0a"
+_PANEL_ROW_H = 22
+_PANEL_PAD = 10
+# ตำแหน่ง x ของแต่ละคอลัมน์ (อิงมุมซ้ายบนของ panel) + ความกว้างรวม
+_PANEL_COLS = ((0, "Rumour"), (175, "Map"), (330, "Mods"), (510, "Rating"))
+_PANEL_W = 560
+# สีตามเทียร์ — ยิ่งดียิ่งสว่าง/เขียว, แย่ -> ส้ม/แดง, ไม่รู้จัก -> เทา
+_RATING_COLORS = {
+    "S+": "#ffd24a", "S": "#ffd24a",
+    "A+": "#7BE06B", "A": "#7BE06B",
+    "B+": "#5aa9ff", "B": "#5aa9ff",
+    "C": "#e6c84a", "D": "#e69a4a", "F": "#e0564a",
+}
+
+
+def _rating_color(rating: str) -> str:
+    return _RATING_COLORS.get(rating.strip(), "#9aa0a6")
+
 _LWA_COLORKEY = 0x1
 _LWA_ALPHA = 0x2
 
@@ -178,6 +199,39 @@ class Overlay:
                 fill=_BG_FILL, outline="", tags=f"{tag}bg",
             )
             self.canvas.tag_lower(bg, tag)
+
+    def draw_rumour_panel(self, rumours: list, x: float, y: float) -> None:
+        """วาดตารางข่าวลือ Expedition (Rumour | Map | Mods | Rating) ที่พิกัด (x,y).
+        rumours = list ของ Rumour (มี .name/.map/.mods/.rating). วาดทับของเดิม
+        (ไม่ล้าง canvas) — เรียกหลัง render() แล้ว. ดันให้อยู่ในจอถ้าล้นขวา/ล่าง."""
+        if not rumours:
+            return
+        c = self.canvas
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        height = _PANEL_PAD * 2 + _PANEL_ROW_H * (len(rumours) + 1)
+        # กันล้นจอ
+        x = max(8, min(int(x), sw - _PANEL_W - 8))
+        y = max(8, min(int(y), sh - height - 8))
+
+        c.create_rectangle(x, y, x + _PANEL_W, y + height,
+                           fill=_PANEL_BG, outline="#3a3a3a", tags="rumour")
+        cx = x + _PANEL_PAD
+        cy = y + _PANEL_PAD
+        # หัวตาราง
+        for col_x, title in _PANEL_COLS:
+            c.create_text(cx + col_x, cy, text=title, anchor="nw",
+                          fill="#a9a9a9", font=_PANEL_HEAD_FONT, tags="rumour")
+        cy += _PANEL_ROW_H
+        # แถวข้อมูล
+        for r in rumours:
+            cells = (r.name, r.map, r.mods)
+            for (col_x, _), value in zip(_PANEL_COLS, cells):
+                c.create_text(cx + col_x, cy, text=value, anchor="nw",
+                              fill="#ececec", font=_PANEL_FONT, tags="rumour")
+            c.create_text(cx + _PANEL_COLS[3][0], cy, text=r.rating, anchor="nw",
+                          fill=_rating_color(r.rating), font=_FONT, tags="rumour")
+            cy += _PANEL_ROW_H
 
     def clear(self) -> None:
         self.canvas.delete("all")
