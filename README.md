@@ -60,7 +60,9 @@
 
 เหมาะกับคนที่อยากใช้เลย ไม่ต้องลงอะไร
 
-1. โหลด **`PoE Price Check.exe`** จากหน้า [Releases](https://github.com/nokranger/poe-price-check/releases/latest) (ไฟล์เดียว ~13 MB)
+1. โหลด **zip** จากหน้า [Releases](https://github.com/nokranger/poe-price-check/releases/latest) → แตก zip → เปิด `PoE Price Check.exe` ข้างใน
+   - ไฟล์ใน Releases **build อัตโนมัติบน GitHub Actions จากซอร์สโค้ดตรง ๆ** (ไม่ได้ build บนเครื่องส่วนตัว)
+     พร้อม attestation พิสูจน์ได้ว่าตรงกับซอร์ส: `gh attestation verify <ไฟล์ zip> --repo nokranger/poe-price-check`
 2. **ดับเบิลคลิก** เปิดได้เลย — ไม่ต้องลง Python, ไม่มีหน้าต่าง cmd
    - ครั้งแรก Windows SmartScreen อาจเตือน "Unknown publisher" → กด **More info → Run anyway**
    - แอนตี้ไวรัสบางตัวอาจเตือน (false positive ของไฟล์ PyInstaller ที่ไม่ได้เซ็น) → อนุญาตได้

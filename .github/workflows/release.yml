@@ -1,0 +1,100 @@
+# ===== Build + Release อัตโนมัติ =====
+# ทำงานเมื่อ push tag ที่ขึ้นต้นด้วย v (เช่น v0.1.7):
+#   1. รันเทสต์ทั้งหมด (ถ้าเทสต์พังจะไม่ปล่อย release)
+#   2. build .exe แบบ onedir ด้วย PyInstaller (สูตรเดียวกับ build-onedir.bat)
+#   3. zip + สร้าง SHA256
+#   4. ออก build provenance attestation (พิสูจน์ว่าไฟล์มาจากซอร์ส tag นี้)
+#   5. สร้าง GitHub Release พร้อมแนบไฟล์ + ข้อความจาก .github/release-template.md
+#
+# วิธีออกเวอร์ชันใหม่:
+#   1. แก้เลขเวอร์ชันใน poe_price/__init__.py
+#   2. แก้ .github/whats-new.md เป็น "ของใหม่" ของเวอร์ชันนี้ (ลบของเก่าทิ้ง)
+#   3. commit + push แล้วแปะ tag:
+#        git tag v0.1.7
+#        git push origin v0.1.7
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write      # สร้าง release + แนบไฟล์
+  id-token: write      # จำเป็นสำหรับ attestation
+  attestations: write  # จำเป็นสำหรับ attestation
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+      # สูตรเดียวกับ build-onedir.bat — ถ้าแก้ build-onedir.bat ต้องแก้ตรงนี้ให้ตรงกันด้วย
+      - name: Build (PyInstaller onedir)
+        run: >-
+          python -m PyInstaller --noconfirm --onedir --windowed --name "PoE Price Check"
+          --add-data "img;img"
+          --collect-all winrt
+          --collect-submodules poe_price
+          run.py
+
+      - name: Zip + SHA256
+        shell: pwsh
+        run: |
+          $zip = "PoE-Price-Check-${{ github.ref_name }}.zip"
+          Compress-Archive -Path "dist/PoE Price Check" -DestinationPath "dist/$zip" -Force
+          $hash = (Get-FileHash "dist/$zip" -Algorithm SHA256).Hash
+          Set-Content -Path "dist/$zip.sha256.txt" -Value "$hash  $zip" -Encoding ascii
+          echo "SHA256 = $hash"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/PoE-Price-Check-*.zip
+
+      - name: Prepare release notes from template
+        shell: pwsh
+        run: |
+          $zip  = "PoE-Price-Check-${{ github.ref_name }}.zip"
+          $hash = (Get-FileHash "dist/$zip" -Algorithm SHA256).Hash
+          $body = Get-Content ".github/release-template.md" -Raw -Encoding utf8
+
+          # ส่วน "ของใหม่" ของเวอร์ชันนี้ — อ่านจาก .github/whats-new.md (แก้ไฟล์นั้นทุกเวอร์ชัน)
+          $whatsNew = ""
+          if (Test-Path ".github/whats-new.md") {
+            $whatsNew = Get-Content ".github/whats-new.md" -Raw -Encoding utf8
+            $whatsNew = ($whatsNew -replace '(?s)<!--.*?-->', '').Trim()   # ตัดคอมเมนต์คำอธิบายออก
+          }
+          if ($whatsNew -ne "") { $whatsNew = "---`n`n" + $whatsNew }
+          $body = $body.Replace("{WHATS_NEW}", $whatsNew)
+
+          $body = $body.Replace("{ZIP}", $zip)
+          $body = $body.Replace("{SHA256}", $hash)
+          $body = $body.Replace("{TAG}", "${{ github.ref_name }}")
+          $body = $body.Replace("{REPO}", "${{ github.repository }}")
+          $body = $body.Replace("{RUN_URL}", "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          Set-Content -Path "release-body.md" -Value $body -Encoding utf8
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "PoE Price Check ${{ github.ref_name }}"
+          body_path: release-body.md
+          generate_release_notes: true   # แนบรายการ commit ที่เปลี่ยน (What's Changed) ต่อท้ายให้อัตโนมัติ
+          files: |
+            dist/PoE-Price-Check-*.zip
+            dist/*.sha256.txt
