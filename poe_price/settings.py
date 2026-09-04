@@ -15,7 +15,7 @@ from .config import AppConfig
 from .hotkeys import KEY_ORDER
 
 _CURRENCIES = ["divine", "exalted", "chaos"]
-_LEAGUE_SUGGESTIONS = ["Runes of Aldur", "HC Runes of Aldur", "Standard"]
+_LEAGUE_SUGGESTIONS = ["Forbidden Rites", "HC Forbidden Rites", "Standard", "Runes of Aldur"]
 
 # ลิงก์สนับสนุน (YouTube membership) — เปิดในเบราว์เซอร์ ไม่ล็อกฟีเจอร์ใด ๆ
 SUPPORT_URL = "https://www.youtube.com/c/NokrangerChannel/join"
@@ -66,7 +66,7 @@ def open_help(parent: tk.Misc) -> tk.Toplevel:
 
     add("เคล็ดลับ", "h")
     add("•  เลื่อนหน้า/เปลี่ยนของ แล้วกด F9 ใหม่ เพื่ออ่านอีกรอบ")
-    add("•  เปลี่ยนลีกได้ในช่อง League (เช่น HC Runes of Aldur)")
+    add("•  เปลี่ยนลีกได้ในช่อง League (เช่น HC Forbidden Rites)")
     add("•  ราคาอัปเดตเองทุก 30 นาที — อยากได้สดกด “ดึงราคาใหม่ตอนนี้”")
 
     add("ราคาไม่ขึ้น? เช็คนี่", "h")

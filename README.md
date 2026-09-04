@@ -90,11 +90,11 @@ py run.py
 
 ```bash
 # เช็คราคาในเทอร์มินัลล้วน (ไม่ต้องเปิด overlay)
-py -m poe_price "Runes of Aldur" -s "Divine Orb"
-py -m poe_price "Runes of Aldur" --top 20          # โชว์ 20 อันดับแพงสุด
+py -m poe_price "Forbidden Rites" -s "Divine Orb"
+py -m poe_price "Forbidden Rites" --top 20          # โชว์ 20 อันดับแพงสุด
 
 # จับภาพหน้าจอ -> อ่านราคา แสดงใน terminal
-py -m poe_price.scan "Runes of Aldur"
+py -m poe_price.scan "Forbidden Rites"
 
 # ทดสอบว่า OCR ใช้ได้
 py run.py --selftest        # ต้องขึ้น "SELFTEST OK"
@@ -140,7 +140,7 @@ py -m PyInstaller --onefile --windowed --name "PoE Price Check" ^
 ต้องกด refresh เองเฉพาะตอน: status ขึ้น **"ดึงราคาไม่ได้"** (เน็ตมีปัญหาตอนเปิด) หรืออยาก
 ได้ราคาล่าสุดทันทีไม่รอ 30 นาที → กด **F8 → "ดึงราคาใหม่ตอนนี้"** → กด F9 อ่านใหม่
 
-**ลีก:** ดีฟอลต์ "Runes of Aldur". ลีกเปลี่ยนเมื่อไหร่ ไปแก้ในหน้า Settings (F8) ได้เลย
+**ลีก:** ดีฟอลต์ "Forbidden Rites". ลีกเปลี่ยนเมื่อไหร่ ไปแก้ในหน้า Settings (F8) ได้เลย
 **ไม่ต้องโหลดโปรแกรมใหม่** (ใส่ชื่อให้ตรงกับแถบเลือกลีกบน poe.ninja/poe2)
 
 ## หมวดที่เช็คราคาได้ (14 หมวด)
@@ -183,7 +183,7 @@ tests/           เทสต์ offline (ไม่ยิงเน็ต/ไม�
 ```python
 from poe_price import PriceRepository
 
-repo = PriceRepository(league="Runes of Aldur")
+repo = PriceRepository(league="Forbidden Rites")
 repo.fetch()
 entry = repo.get("Divine Orb")          # exact -> PriceEntry | None
 result = repo.match("divlne orb")       # fuzzy: ทนชื่อเพี้ยน (สำหรับ OCR)

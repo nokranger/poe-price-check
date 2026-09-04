@@ -26,7 +26,7 @@ def config_path() -> str:
 
 @dataclass
 class AppConfig:
-    league: str = "Runes of Aldur"  # ลีกปัจจุบัน (poe.ninja slug: runesofaldur)
+    league: str = "Forbidden Rites"  # ลีกปัจจุบัน (poe.ninja slug: forbiddenrites)
     # พื้นที่จับภาพ (left, top, width, height); None = ยังไม่ได้ calibrate
     region: tuple[int, int, int, int] | None = None
     scan_interval: float = 1.0          # วินาทีต่อรอบสแกน
@@ -58,7 +58,7 @@ class AppConfig:
             return cls()
         region = data.get("region")
         cfg = cls(
-            league=data.get("league", "Runes of Aldur"),
+            league=data.get("league", "Forbidden Rites"),
             region=tuple(region) if region else None,
             scan_interval=float(data.get("scan_interval", 1.0)),
             currency=data.get("currency", "divine"),

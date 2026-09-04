@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
             pass
 
     parser = argparse.ArgumentParser(prog="poe_price", description="PoE2 price helper (poe.ninja)")
-    parser.add_argument("league", nargs="?", default="Runes of Aldur", help='ชื่อลีก (ดีฟอลต์ "Runes of Aldur")')
+    parser.add_argument("league", nargs="?", default="Forbidden Rites", help='ชื่อลีก (ดีฟอลต์ "Forbidden Rites")')
     parser.add_argument("--search", "-s", metavar="NAME", help="ค้นราคาไอเทมตามชื่อ")
     parser.add_argument("--top", "-n", type=int, default=15, help="โชว์ N อันดับแพงสุด (ดีฟอลต์ 15)")
     args = parser.parse_args(argv)

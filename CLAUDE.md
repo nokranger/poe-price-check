@@ -15,8 +15,8 @@ py run.py                                  # run the full overlay app
 py run.py --selftest                       # verify OCR works (must print "SELFTEST OK")
 py -m unittest discover -s tests -v        # run all tests (offline: no network, no screen)
 py -m unittest tests.test_matcher -v       # run a single test module
-py -m poe_price "Runes of Aldur" -s "Divine Orb"   # CLI price lookup (no overlay)
-py -m poe_price.scan "Runes of Aldur"      # capture screen -> OCR -> prices in terminal
+py -m poe_price "Forbidden Rites" -s "Divine Orb"   # CLI price lookup (no overlay)
+py -m poe_price.scan "Forbidden Rites"     # capture screen -> OCR -> prices in terminal
 ```
 
 Build (.exe): double-click `build.bat` (onefile) or `build-onedir.bat` (onedir + zip + SHA256 — flagged far less by antivirus). Requires Python 3.13 on Windows 10/11.

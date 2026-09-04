@@ -26,7 +26,7 @@ _EMPTY = PriceSnapshot(prices={}, keys_by_length={}, fetched_at=None)
 class PriceRepository:
     def __init__(
         self,
-        league: str = "Runes of Aldur",
+        league: str = "Forbidden Rites",
         timeout: float = 30.0,
         types: tuple[str, ...] | None = None,
     ) -> None:

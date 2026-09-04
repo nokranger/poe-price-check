@@ -102,7 +102,7 @@ def _main(argv: list[str] | None = None) -> int:
             pass
 
     parser = argparse.ArgumentParser(prog="poe_price.scan", description="จับภาพหน้าจอ -> อ่านราคา PoE2")
-    parser.add_argument("league", nargs="?", default="Runes of Aldur")
+    parser.add_argument("league", nargs="?", default="Forbidden Rites")
     parser.add_argument("--region", "-r", nargs=4, type=int, metavar=("L", "T", "W", "H"),
                         help="พื้นที่ที่จะจับ (ซ้าย บน กว้าง สูง). ไม่ใส่ = ทั้งจอ")
     parser.add_argument("--all", action="store_true", help="โชว์ทุกบรรทัดรวมที่จับคู่ไม่ได้")
