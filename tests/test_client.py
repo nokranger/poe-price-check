@@ -7,7 +7,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from poe_price.client import parse_response
+from poe_price.client import parse_leagues, parse_response
 
 # จำลองรูปร่าง response ของ poe.ninja PoE2 exchange/current/overview
 # ลีกนี้ primary = divine, มี rate exalted ต่อ 1 divine.
@@ -78,6 +78,38 @@ class TestParseResponse(unittest.TestCase):
         prices = parse_response(_SAMPLE_DIVINE)
         self.assertIn("mirror of kalandra", prices)
         self.assertNotIn("Mirror of Kalandra", prices)
+
+
+# จำลองรูปร่าง response ของ poe.ninja poe2/api/data/index-state
+_SAMPLE_LEAGUES = json.dumps(
+    {
+        "economyLeagues": [
+            {"name": "Forbidden Rites", "url": "forbiddenrites", "hardcore": False, "indexed": False},
+            {"name": "Runes of Aldur", "url": "runesofaldur", "hardcore": False, "indexed": True},
+            {"name": "HC Forbidden Rites", "url": "forbiddenriteshc", "hardcore": True, "indexed": False},
+            {"name": "Runes of Aldur", "url": "runesofaldur-dup"},  # ชื่อซ้ำ — ต้องไม่ซ้ำในผลลัพธ์
+            {"url": "no-name"},                                     # ไม่มีชื่อ — ต้องข้าม
+            {"name": "", "url": "empty-name"},                      # ชื่อว่าง — ต้องข้าม
+            {"name": "Standard", "url": "standard", "indexed": True},
+        ]
+    }
+)
+
+
+class TestParseLeagues(unittest.TestCase):
+    def test_names_in_api_order(self):
+        self.assertEqual(
+            parse_leagues(_SAMPLE_LEAGUES),
+            ["Forbidden Rites", "Runes of Aldur", "HC Forbidden Rites", "Standard"],
+        )
+
+    def test_unindexed_league_still_listed(self):
+        # ลีกเพิ่งเปิด (indexed=False) ต้องเลือกได้ — ราคาจะตามมาเมื่อ poe.ninja เริ่มเก็บ
+        self.assertIn("Forbidden Rites", parse_leagues(_SAMPLE_LEAGUES))
+
+    def test_empty_or_missing_payload(self):
+        self.assertEqual(parse_leagues("{}"), [])
+        self.assertEqual(parse_leagues('{"economyLeagues": null}'), [])
 
 
 if __name__ == "__main__":

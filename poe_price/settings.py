@@ -15,6 +15,8 @@ from .config import AppConfig
 from .hotkeys import KEY_ORDER
 
 _CURRENCIES = ["divine", "exalted", "chaos"]
+# fallback เมื่อยังดึงรายชื่อลีกจาก poe.ninja ไม่ได้ (เพิ่งเปิด/เน็ตพัง) —
+# ปกติรายการจริงมาจาก client.fetch_leagues() ผ่านพารามิเตอร์ leagues ของ open_settings
 _LEAGUE_SUGGESTIONS = ["Forbidden Rites", "HC Forbidden Rites", "Standard", "Runes of Aldur"]
 
 # ลิงก์สนับสนุน (YouTube membership) — เปิดในเบราว์เซอร์ ไม่ล็อกฟีเจอร์ใด ๆ
@@ -89,7 +91,8 @@ def open_help(parent: tk.Misc) -> tk.Toplevel:
     return win
 
 
-def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, on_quit=None) -> tk.Toplevel:
+def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, on_quit=None,
+                  leagues: list[str] | None = None) -> tk.Toplevel:
     win = tk.Toplevel(parent)
     win.title("PoE Price Check — ตั้งค่า (Settings)")
     win.attributes("-topmost", True)
@@ -117,11 +120,14 @@ def open_settings(parent: tk.Misc, config: AppConfig, on_save, on_refresh=None, 
                                                      sticky="ew", padx=10, pady=(0, 6))
     ttk.Separator(frm, orient="horizontal").grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
-    # ลีก
+    # ลีก — รายการจาก poe.ninja (ถ้าดึงได้) ไม่งั้นใช้ fallback; ยังพิมพ์ชื่อเองได้เสมอ
     row_label(2, "ลีก (League)")
+    league_values = list(leagues) if leagues else list(_LEAGUE_SUGGESTIONS)
+    if config.league not in league_values:
+        league_values.insert(0, config.league)
     league_var = tk.StringVar(value=config.league)
     ttk.Combobox(frm, textvariable=league_var, width=24, font=f["base"],
-                 values=_LEAGUE_SUGGESTIONS).grid(row=2, column=1, **pad)
+                 values=league_values).grid(row=2, column=1, **pad)
     if on_refresh is not None:
         ttk.Button(frm, text="ดึงราคาใหม่ตอนนี้ (Refresh prices)",
                    command=lambda: (on_refresh(),

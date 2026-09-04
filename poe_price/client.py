@@ -21,6 +21,8 @@ from .models import PriceEntry
 from .normalizer import normalize
 
 BASE_URL = "https://poe.ninja/poe2/api/economy/exchange/current/overview"
+# รายชื่อลีกทั้งหมด (host เดียวกับราคา — poe.ninja เท่านั้น ตาม SECURITY.md)
+LEAGUES_URL = "https://poe.ninja/poe2/api/data/index-state"
 
 # หมวด "GENERAL" ของ poe.ninja ที่ยิง exchange API ได้จริง (ยืนยันกับลีก Runes of Aldur).
 # ครอบคลุมของที่โผล่ในเกือบทุก panel รวม alloy (อยู่ในหมวด Verisium). ต้นฉบับใช้แค่ 5
@@ -76,6 +78,39 @@ def fetch_type(league: str, exchange_type: str, timeout: float = 30.0) -> dict[s
     except (urllib.error.URLError, TimeoutError) as exc:
         raise PriceFetchError(f"{exchange_type}: {exc}") from exc
     return parse_response(raw)
+
+
+def fetch_leagues(timeout: float = 10.0) -> list[str]:
+    """ดึงรายชื่อลีกปัจจุบันทั้งหมดจาก poe.ninja. ถ้า fail จะ raise PriceFetchError.
+
+    ใช้เติมตัวเลือกลีกในหน้า Settings อัตโนมัติ — ลีกใหม่มาไม่ต้องออกเวอร์ชันใหม่.
+    """
+    headers = {
+        "User-Agent": _USER_AGENT,
+        "Referer": "https://poe.ninja/poe2/economy",
+        "Accept": "application/json",
+    }
+    req = urllib.request.Request(LEAGUES_URL, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raise PriceFetchError(f"leagues: HTTP {exc.code}") from exc
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise PriceFetchError(f"leagues: {exc}") from exc
+    return parse_leagues(raw)
+
+
+def parse_leagues(raw: str) -> list[str]:
+    """แปลง JSON ของ index-state -> รายชื่อลีก (คงลำดับจาก API: ลีกใหม่มาก่อน).
+    ฟังก์ชันบริสุทธิ์ แยกไว้ให้เทสต์ offline ได้เหมือน parse_response."""
+    obj = json.loads(raw)
+    names: list[str] = []
+    for league in obj.get("economyLeagues") or []:
+        name = league.get("name")
+        if isinstance(name, str) and name and name not in names:
+            names.append(name)
+    return names
 
 
 def parse_response(raw: str) -> dict[str, PriceEntry]:

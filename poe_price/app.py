@@ -53,6 +53,7 @@ class App:
         self._showing = False       # กำลังโชว์ราคาค้างอยู่ไหม (one-shot toggle)
         self._busy = False          # กำลังสแกนอยู่ (กันกดซ้อน)
         self._last_rows = None       # ผลสแกนล่าสุด (re-render ตอนสลับหน่วยเงินโดยไม่ต้องสแกนใหม่)
+        self._leagues: list[str] | None = None  # รายชื่อลีกจาก poe.ninja (None = ยังดึงไม่ได้ -> ใช้ fallback)
 
     # ---- lifecycle ---------------------------------------------------------
 
@@ -68,6 +69,12 @@ class App:
     def _initial_fetch(self) -> None:
         """ดึงราคาครั้งแรก + ตั้ง auto-refresh ทุก 30 นาที. รายงานผลจริงผ่าน status."""
         self.repo.start_auto_refresh()
+        # ดึงรายชื่อลีกไว้เติมดรอปดาวน์ในหน้า Settings — พลาดได้ไม่เป็นไร (มี fallback)
+        try:
+            from .client import PriceFetchError, fetch_leagues
+            self.queue.put(("leagues", fetch_leagues()))
+        except PriceFetchError:
+            pass
         c = self.config
         n = self.repo.item_count
         if n > 0:
@@ -142,6 +149,8 @@ class App:
                     self._showing = True
                 elif action == "status":
                     self._status(payload)
+                elif action == "leagues":
+                    self._leagues = payload
         except queue.Empty:
             pass
         if self._running:
@@ -176,7 +185,8 @@ class App:
         from .settings import open_settings
 
         open_settings(self.overlay.root, self.config, self._apply_settings,
-                      self._refresh_now, lambda: self.queue.put(("quit", None)))
+                      self._refresh_now, lambda: self.queue.put(("quit", None)),
+                      leagues=self._leagues)
 
     def _apply_settings(self, new: dict) -> None:
         c = self.config
@@ -214,6 +224,13 @@ class App:
                                        f"{self.config.toggle_key} แสดงราคา"))
         except Exception as exc:
             self.queue.put(("status", f"ดึงราคาไม่ได้: {exc}"))
+        # ถ้าตอนเปิดโปรแกรมดึงรายชื่อลีกพลาด (เน็ตล่มชั่วคราว) ลองใหม่ตอนกด refresh
+        if self._leagues is None:
+            try:
+                from .client import PriceFetchError, fetch_leagues
+                self.queue.put(("leagues", fetch_leagues()))
+            except PriceFetchError:
+                pass
 
     # ---- worker (รันบน background thread) ----------------------------------
 
